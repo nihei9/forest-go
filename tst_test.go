@@ -152,7 +152,7 @@ func TestTernarySearchTree_Search(t *testing.T) {
 	})
 }
 
-func TestTernarySearchTree_List(t *testing.T) {
+func TestTernarySearchTree_Keys(t *testing.T) {
 	prettier := func(runeSeq []rune) string {
 		return string(runeSeq)
 	}
@@ -169,8 +169,8 @@ func TestTernarySearchTree_List(t *testing.T) {
 			}
 		}
 
-		list := tst.List(nil)
-		testTSTListResult(t, list, keys, prettier)
+		list := tst.Keys(nil)
+		testTSTKeys(t, list, keys, prettier)
 	})
 
 	t.Run("The tree can contain keys with the same prefix", func(t *testing.T) {
@@ -190,16 +190,16 @@ func TestTernarySearchTree_List(t *testing.T) {
 		}
 
 		{
-			list := tst.List(nil)
-			testTSTListResult(t, list, keys, prettier)
+			list := tst.Keys(nil)
+			testTSTKeys(t, list, keys, prettier)
 		}
 		{
 			expected := [][]rune{
 				[]rune("healthy"),
 				[]rune("heaven"),
 			}
-			list := tst.List([]rune("hea"))
-			testTSTListResult(t, list, expected, prettier)
+			list := tst.Keys([]rune("hea"))
+			testTSTKeys(t, list, expected, prettier)
 		}
 		{
 			expected := [][]rune{
@@ -207,15 +207,15 @@ func TestTernarySearchTree_List(t *testing.T) {
 				[]rune("hell"),
 				[]rune("hello😺"),
 			}
-			list := tst.List([]rune("hell"))
-			testTSTListResult(t, list, expected, prettier)
+			list := tst.Keys([]rune("hell"))
+			testTSTKeys(t, list, expected, prettier)
 		}
 	})
 
 	t.Run("When the tree is empty, the result of list operation is also empty", func(t *testing.T) {
 		tst := NewTernarySearchTree[rune, int]()
 
-		list := tst.List(nil)
+		list := tst.Keys(nil)
 		if len(list) != 0 {
 			t.Fatalf("result must be empty")
 		}
@@ -227,7 +227,7 @@ func TestTernarySearchTree_List(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		list := tst.List([]rune("fooo"))
+		list := tst.Keys([]rune("fooo"))
 		if len(list) != 0 {
 			t.Fatalf("result must be empty")
 		}
@@ -315,7 +315,7 @@ func TestTernarySearchTree_Delete(t *testing.T) {
 	})
 }
 
-func testTSTListResult[K constraints.Ordered, P any](t *testing.T, actual, expected [][]K, prettier func([]K) P) {
+func testTSTKeys[K constraints.Ordered, P any](t *testing.T, actual, expected [][]K, prettier func([]K) P) {
 	t.Helper()
 
 	if len(actual) != len(expected) {

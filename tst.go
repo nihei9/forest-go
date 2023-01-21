@@ -51,9 +51,29 @@ func (t *TernarySearchTree[K, V]) Search(key []K) (value V, found bool) {
 	return
 }
 
-func (t *TernarySearchTree[K, V]) List(prefix []K) [][]K {
+type TernarySearchTreeEntry[K constraints.Ordered, V any] struct {
+	Key   []K
+	Value V
+}
+
+func (t *TernarySearchTree[K, V]) Entries(prefix []K) []*TernarySearchTreeEntry[K, V] {
+	return ApplyToTernarySearchTree(t, prefix, func(key []K, val V) *TernarySearchTreeEntry[K, V] {
+		return &TernarySearchTreeEntry[K, V]{
+			Key:   key,
+			Value: val,
+		}
+	})
+}
+
+func (t *TernarySearchTree[K, V]) Keys(prefix []K) [][]K {
 	return ApplyToTernarySearchTree(t, prefix, func(key []K, val V) []K {
 		return key
+	})
+}
+
+func (t *TernarySearchTree[K, V]) Values(prefix []K) []V {
+	return ApplyToTernarySearchTree(t, prefix, func(key []K, val V) V {
+		return val
 	})
 }
 
