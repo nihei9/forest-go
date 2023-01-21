@@ -169,13 +169,15 @@ func TestTernarySearchTree_List(t *testing.T) {
 			}
 		}
 
-		list := tst.List()
+		list := tst.List(nil)
 		testTSTListResult(t, list, keys, prettier)
 	})
 
 	t.Run("The tree can contain keys with the same prefix", func(t *testing.T) {
 		keys := [][]rune{
+			[]rune("healthy"),
 			[]rune("hello"),
+			[]rune("world"),
 			[]rune("hell"),
 			[]rune("hello😺"),
 			[]rune("heaven"),
@@ -187,14 +189,45 @@ func TestTernarySearchTree_List(t *testing.T) {
 			}
 		}
 
-		list := tst.List()
-		testTSTListResult(t, list, keys, prettier)
+		{
+			list := tst.List(nil)
+			testTSTListResult(t, list, keys, prettier)
+		}
+		{
+			expected := [][]rune{
+				[]rune("healthy"),
+				[]rune("heaven"),
+			}
+			list := tst.List([]rune("hea"))
+			testTSTListResult(t, list, expected, prettier)
+		}
+		{
+			expected := [][]rune{
+				[]rune("hello"),
+				[]rune("hell"),
+				[]rune("hello😺"),
+			}
+			list := tst.List([]rune("hell"))
+			testTSTListResult(t, list, expected, prettier)
+		}
 	})
 
 	t.Run("When the tree is empty, the result of list operation is also empty", func(t *testing.T) {
 		tst := NewTernarySearchTree[rune, int]()
 
-		list := tst.List()
+		list := tst.List(nil)
+		if len(list) != 0 {
+			t.Fatalf("result must be empty")
+		}
+	})
+
+	t.Run("A too-long prefix does not match any keys", func(t *testing.T) {
+		tst := NewTernarySearchTree[rune, int]()
+		if err := tst.Insert([]rune("foo"), 1); err != nil {
+			t.Fatal(err)
+		}
+
+		list := tst.List([]rune("fooo"))
 		if len(list) != 0 {
 			t.Fatalf("result must be empty")
 		}

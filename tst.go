@@ -21,12 +21,39 @@ type tstListBuf[K constraints.Ordered] struct {
 	keyBuf  []K
 }
 
+func (b *tstListBuf[K]) setup(entryCount int, maxKeyLen int) {
+	if entryCount > len(b.entries) {
+		b.entries = make([][]K, entryCount)
+	}
+	b.entPtr = 0
+	if maxKeyLen > len(b.keyBuf) {
+		b.keyBuf = make([]K, maxKeyLen)
+	}
+}
+
+func (b *tstListBuf[K]) put(i int, k K) {
+	b.keyBuf[i] = k
+}
+
+func (b *tstListBuf[K]) append(end int) {
+	key := make([]K, end+1)
+	copy(key, b.keyBuf[:end+1])
+	b.entries[b.entPtr] = key
+	b.entPtr++
+}
+
+func (b *tstListBuf[K]) list() [][]K {
+	entries := make([][]K, b.entPtr)
+	copy(entries, b.entries[:b.entPtr])
+	return entries
+}
+
 type TernarySearchTree[K constraints.Ordered, V any] struct {
 	root      *tsNode[K, V]
 	count     int
 	maxKeyLen int
 
-	tstListBuf[K]
+	listBuf *tstListBuf[K]
 }
 
 func NewTernarySearchTree[K constraints.Ordered, V any]() *TernarySearchTree[K, V] {
@@ -52,33 +79,47 @@ func (t *TernarySearchTree[K, V]) Search(key []K) (value V, found bool) {
 	if len(key) == 0 {
 		return
 	}
-	n, ok := t.search(t.root, key)
-	if !ok {
-		return
+	n := t.search(t.root, key)
+	if n != nil && n.end {
+		return n.val, true
 	}
-	return n.val, true
+	return
 }
 
-func (t *TernarySearchTree[K, V]) List() [][]K {
-	if t.count > len(t.entries) {
-		t.entries = make([][]K, t.count)
+func (t *TernarySearchTree[K, V]) List(prefix []K) [][]K {
+	if len(prefix) > t.maxKeyLen {
+		return nil
 	}
-	t.entPtr = 0
-	if t.maxKeyLen > len(t.keyBuf) {
-		t.keyBuf = make([]K, t.maxKeyLen)
+
+	if t.listBuf == nil {
+		t.listBuf = &tstListBuf[K]{}
 	}
-	t.list(0, t.root)
-	entries := make([][]K, t.count)
-	copy(entries, t.entries)
-	return entries
+	t.listBuf.setup(t.count, t.maxKeyLen)
+
+	root := t.root
+	if len(prefix) > 0 {
+		n := t.search(t.root, prefix)
+		if n == nil {
+			return nil
+		}
+		for i, p := range prefix {
+			t.listBuf.put(i, p)
+		}
+		if n.end {
+			t.listBuf.append(len(prefix) - 1)
+		}
+		root = n.eq
+	}
+	t.list(len(prefix), root)
+	return t.listBuf.list()
 }
 
 func (t *TernarySearchTree[K, V]) Delete(key []K) (value V, found bool) {
 	if len(key) == 0 {
 		return
 	}
-	n, ok := t.search(t.root, key)
-	if !ok {
+	n := t.search(t.root, key)
+	if n == nil {
 		return
 	}
 	n.end = false
@@ -112,22 +153,19 @@ func (t *TernarySearchTree[K, V]) insertTo(node **tsNode[K, V], key []K, value V
 	}
 }
 
-func (t *TernarySearchTree[K, V]) search(node *tsNode[K, V], key []K) (*tsNode[K, V], bool) {
+func (t *TernarySearchTree[K, V]) search(node *tsNode[K, V], prefix []K) *tsNode[K, V] {
 	switch {
 	case node == nil:
-		return nil, false
-	case key[0] < node.split:
-		return t.search(node.lt, key)
-	case key[0] > (*node).split:
-		return t.search(node.gt, key)
+		return nil
+	case prefix[0] < node.split:
+		return t.search(node.lt, prefix)
+	case prefix[0] > (*node).split:
+		return t.search(node.gt, prefix)
 	default:
-		if len(key) > 1 {
-			return t.search(node.eq, key[1:])
+		if len(prefix) > 1 {
+			return t.search(node.eq, prefix[1:])
 		}
-		if !node.end {
-			return nil, false
-		}
-		return node, true
+		return node
 	}
 }
 
@@ -139,13 +177,11 @@ func (t *TernarySearchTree[K, V]) list(bufPtr int, node *tsNode[K, V]) {
 	t.list(bufPtr, node.lt)
 
 	if node.end {
-		t.keyBuf[bufPtr] = node.split
-		t.entries[t.entPtr] = make([]K, bufPtr+1)
-		copy(t.entries[t.entPtr], t.keyBuf[:bufPtr+1])
-		t.entPtr++
+		t.listBuf.put(bufPtr, node.split)
+		t.listBuf.append(bufPtr)
 	}
 	if node.eq != nil {
-		t.keyBuf[bufPtr] = node.split
+		t.listBuf.put(bufPtr, node.split)
 		t.list(bufPtr+1, node.eq)
 	}
 
