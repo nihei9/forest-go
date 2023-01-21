@@ -21,10 +21,12 @@ type TernarySearchTree[K constraints.Ordered, V any] struct {
 	maxKeyLen int
 }
 
+// NewTernarySearchTree returns a new ternary search tree that can contain entries mapping `[]K` to `V`.
 func NewTernarySearchTree[K constraints.Ordered, V any]() *TernarySearchTree[K, V] {
 	return &TernarySearchTree[K, V]{}
 }
 
+// Insert inserts an entry. When the key already exists, this function return an error.
 func (t *TernarySearchTree[K, V]) Insert(key []K, value V) error {
 	if len(key) == 0 {
 		return fmt.Errorf("key must not be empty")
@@ -40,6 +42,7 @@ func (t *TernarySearchTree[K, V]) Insert(key []K, value V) error {
 	return nil
 }
 
+// Search earches for an entry having a key that exactly matches a specified key and returns its value.
 func (t *TernarySearchTree[K, V]) Search(key []K) (value V, found bool) {
 	if len(key) == 0 {
 		return
@@ -56,6 +59,7 @@ type TernarySearchTreeEntry[K constraints.Ordered, V any] struct {
 	Value V
 }
 
+// Entries returns entries. When a prefix isn't empty, this function returns entries whose key has the prefix.
 func (t *TernarySearchTree[K, V]) Entries(prefix []K) []*TernarySearchTreeEntry[K, V] {
 	return ApplyToTernarySearchTree(t, prefix, func(key []K, val V) *TernarySearchTreeEntry[K, V] {
 		return &TernarySearchTreeEntry[K, V]{
@@ -65,18 +69,21 @@ func (t *TernarySearchTree[K, V]) Entries(prefix []K) []*TernarySearchTreeEntry[
 	})
 }
 
+// Keys returns keys. When a prefix isn't empty, this function returns keys having the prefix.
 func (t *TernarySearchTree[K, V]) Keys(prefix []K) [][]K {
 	return ApplyToTernarySearchTree(t, prefix, func(key []K, val V) []K {
 		return key
 	})
 }
 
+// Values returns values. When a prefix isn't empty, this function returns values whose key has the prefix.
 func (t *TernarySearchTree[K, V]) Values(prefix []K) []V {
 	return ApplyToTernarySearchTree(t, prefix, func(key []K, val V) V {
 		return val
 	})
 }
 
+// Delete deletes an entry and returns its value.
 func (t *TernarySearchTree[K, V]) Delete(key []K) (value V, found bool) {
 	if len(key) == 0 {
 		return
@@ -132,6 +139,7 @@ func (t *TernarySearchTree[K, V]) search(node *tsNode[K, V], prefix []K) *tsNode
 	}
 }
 
+// ApplyToTernarySearchTree applies a user-defined function to each entry whose key has a specified prefix.
 func ApplyToTernarySearchTree[K constraints.Ordered, V any, R any](t *TernarySearchTree[K, V], prefix []K, callback func([]K, V) R) []R {
 	if len(prefix) > t.maxKeyLen {
 		return nil
