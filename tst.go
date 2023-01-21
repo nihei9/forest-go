@@ -157,9 +157,7 @@ func ApplyToTernarySearchTree[K constraints.Ordered, V any, R any](t *TernarySea
 		if n == nil {
 			return nil
 		}
-		for i, p := range prefix {
-			w.keyBuf[i] = p
-		}
+		copy(w.keyBuf, prefix)
 		if n.end {
 			w.apply(len(prefix), n.val)
 		}

@@ -1,6 +1,6 @@
 # forest-go
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/nihei9/forest-go.svg)](https://pkg.go.dev/github.com/nihei9/forest-go)
+[![Test](https://github.com/nihei9/forest-go/actions/workflows/test.yml/badge.svg)](https://github.com/nihei9/forest-go/actions/workflows/test.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/nihei9/forest-go.svg)](https://pkg.go.dev/github.com/nihei9/forest-go)
 
 Tree structure implementations in golang
 
