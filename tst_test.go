@@ -1,7 +1,12 @@
 package forest
 
 import (
+	"math"
+	"reflect"
+	"sort"
 	"testing"
+
+	"golang.org/x/exp/constraints"
 )
 
 func TestTernarySearchTree_Insert(t *testing.T) {
@@ -94,7 +99,7 @@ func TestTernarySearchTree_Search(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		err = tst.Insert([]rune("hello😺"),  3)
+		err = tst.Insert([]rune("hello😺"), 3)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -109,7 +114,7 @@ func TestTernarySearchTree_Search(t *testing.T) {
 		if val, ok := tst.Search([]rune("hell")); !ok || val != 2 {
 			t.Fatalf("unexpected result. want: 2, true, got: %v, %v", val, ok)
 		}
-		if val, ok := tst.Search([]rune("hello😺")); !ok || val !=  3 {
+		if val, ok := tst.Search([]rune("hello😺")); !ok || val != 3 {
 			t.Fatalf("unexpected result. want: 3, true, got: %v, %v", val, ok)
 		}
 		if val, ok := tst.Search([]rune("heaven")); !ok || val != 4 {
@@ -143,6 +148,55 @@ func TestTernarySearchTree_Search(t *testing.T) {
 		}
 		if val, ok := tst.Search(nil); ok || val == 1 {
 			t.Fatalf("unexpected result. want: 0, false, got: %v, %v", val, ok)
+		}
+	})
+}
+
+func TestTernarySearchTree_List(t *testing.T) {
+	prettier := func(runeSeq []rune) string {
+		return string(runeSeq)
+	}
+
+	t.Run("The tree can contain different keys", func(t *testing.T) {
+		keys := [][]rune{
+			[]rune("hello"),
+			[]rune("world"),
+		}
+		tst := NewTernarySearchTree[rune, int]()
+		for i, key := range keys {
+			if err := tst.Insert(key, i+1); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		list := tst.List()
+		testTSTListResult(t, list, keys, prettier)
+	})
+
+	t.Run("The tree can contain keys with the same prefix", func(t *testing.T) {
+		keys := [][]rune{
+			[]rune("hello"),
+			[]rune("hell"),
+			[]rune("hello😺"),
+			[]rune("heaven"),
+		}
+		tst := NewTernarySearchTree[rune, int]()
+		for i, key := range keys {
+			if err := tst.Insert(key, i+1); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		list := tst.List()
+		testTSTListResult(t, list, keys, prettier)
+	})
+
+	t.Run("When the tree is empty, the result of list operation is also empty", func(t *testing.T) {
+		tst := NewTernarySearchTree[rune, int]()
+
+		list := tst.List()
+		if len(list) != 0 {
+			t.Fatalf("result must be empty")
 		}
 	})
 }
@@ -225,5 +279,32 @@ func TestTernarySearchTree_Delete(t *testing.T) {
 		if val, ok := tst.Delete(nil); ok || val == 1 {
 			t.Fatalf("unexpected result. want: 0, false, got: %v, %v", val, ok)
 		}
+	})
+}
+
+func testTSTListResult[K constraints.Ordered, P any](t *testing.T, actual, expected [][]K, prettier func([]K) P) {
+	t.Helper()
+
+	if len(actual) != len(expected) {
+		t.Fatalf("unexpected list length. want: %v, got: %v", len(expected), len(actual))
+	}
+	sortTSTList(actual)
+	sortTSTList(expected)
+	for i, a := range actual {
+		if !reflect.DeepEqual(a, expected[i]) {
+			t.Fatalf("unexpected result. want: %v, got: %v", prettier(expected[i]), prettier(a))
+		}
+	}
+}
+
+func sortTSTList[K constraints.Ordered](list [][]K) {
+	sort.Slice(list, func(i, j int) bool {
+		minLen := int(math.Min(float64(len(list[i])), float64(len(list[j]))))
+		for k := 0; k < minLen; k++ {
+			if list[i][k] != list[j][k] {
+				return list[i][k] < list[j][k]
+			}
+		}
+		return len(list[i]) < len(list[j])
 	})
 }

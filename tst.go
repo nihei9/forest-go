@@ -15,8 +15,18 @@ type tsNode[K constraints.Ordered, V any] struct {
 	val   V
 }
 
+type tstListBuf[K constraints.Ordered] struct {
+	entries [][]K
+	entPtr  int
+	keyBuf  []K
+}
+
 type TernarySearchTree[K constraints.Ordered, V any] struct {
-	root *tsNode[K, V]
+	root      *tsNode[K, V]
+	count     int
+	maxKeyLen int
+
+	tstListBuf[K]
 }
 
 func NewTernarySearchTree[K constraints.Ordered, V any]() *TernarySearchTree[K, V] {
@@ -31,6 +41,10 @@ func (t *TernarySearchTree[K, V]) Insert(key []K, value V) error {
 	if !ok {
 		return fmt.Errorf("key already exist: %v", key)
 	}
+	t.count++
+	if len(key) > t.maxKeyLen {
+		t.maxKeyLen = len(key)
+	}
 	return nil
 }
 
@@ -43,6 +57,20 @@ func (t *TernarySearchTree[K, V]) Search(key []K) (value V, found bool) {
 		return
 	}
 	return n.val, true
+}
+
+func (t *TernarySearchTree[K, V]) List() [][]K {
+	if t.count > len(t.entries) {
+		t.entries = make([][]K, t.count)
+	}
+	t.entPtr = 0
+	if t.maxKeyLen > len(t.keyBuf) {
+		t.keyBuf = make([]K, t.maxKeyLen)
+	}
+	t.list(0, t.root)
+	entries := make([][]K, t.count)
+	copy(entries, t.entries)
+	return entries
 }
 
 func (t *TernarySearchTree[K, V]) Delete(key []K) (value V, found bool) {
@@ -80,8 +108,8 @@ func (t *TernarySearchTree[K, V]) insertTo(node **tsNode[K, V], key []K, value V
 		}
 		(*node).end = true
 		(*node).val = value
+		return true
 	}
-	return true
 }
 
 func (t *TernarySearchTree[K, V]) search(node *tsNode[K, V], key []K) (*tsNode[K, V], bool) {
@@ -101,4 +129,25 @@ func (t *TernarySearchTree[K, V]) search(node *tsNode[K, V], key []K) (*tsNode[K
 		}
 		return node, true
 	}
+}
+
+func (t *TernarySearchTree[K, V]) list(bufPtr int, node *tsNode[K, V]) {
+	if node == nil {
+		return
+	}
+
+	t.list(bufPtr, node.lt)
+
+	if node.end {
+		t.keyBuf[bufPtr] = node.split
+		t.entries[t.entPtr] = make([]K, bufPtr+1)
+		copy(t.entries[t.entPtr], t.keyBuf[:bufPtr+1])
+		t.entPtr++
+	}
+	if node.eq != nil {
+		t.keyBuf[bufPtr] = node.split
+		t.list(bufPtr+1, node.eq)
+	}
+
+	t.list(bufPtr, node.gt)
 }
