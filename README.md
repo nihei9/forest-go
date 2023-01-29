@@ -4,9 +4,24 @@
 
 Tree structure implementations in golang
 
-## Ternary Search Tree
+## Search Tree
 
-### Features
+### AVL Tree
+
+#### Features
+
+* insertion
+* search
+
+#### References
+
+* [AVL tree](https://en.wikipedia.org/wiki/AVL_tree)
+
+## Trie
+
+### Ternary Search Tree
+
+#### Features
 
 * insertion
 * deletion
@@ -14,6 +29,6 @@ Tree structure implementations in golang
 * prefix matching
 * applying a user-defined function to each entry
 
-### References
+#### References
 
 * [Ternary Search Trees](https://www.cs.upc.edu/~ps/downloads/tst/tst.html)
